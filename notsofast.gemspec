@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = Notsofast::VERSION
   spec.authors       = ["Stewart McKee"]
   spec.email         = ["stewart@theizone.co.uk"]
-  spec.description   = "Rate limiting gem based on ip or cookie"
-  spec.summary       = "Rate limiting gem based on ip or cookie"
-  spec.homepage      = ""
+  spec.description   = "Rate limiting gem based on IP address "
+  spec.summary       = "Rate limiting gem based on IP address"
+  spec.homepage      = "http://github.com/stewartmckee/notsofast"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files`.split($/)

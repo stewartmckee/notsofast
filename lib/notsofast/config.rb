@@ -7,7 +7,6 @@ module Notsofast
     @response_types = ["text/html"]
     @limit_expiry = 60
     @notify = Proc.new{|ip, env| }
-asdfasdf
 
     def self.configure(&block)
       yield self

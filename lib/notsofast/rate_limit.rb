@@ -18,10 +18,13 @@ module Notsofast
     def call(env)
       status, headers, response = @app.call(env)
 
+      puts "checking..."
+
       if timestamp - @connections_timestamp > Notsofast::Config.limit_expiry
         @connections_timestamp = timestamp
         @connections = {}
       end
+
 
       ip_address = remote_ip(env)
 
@@ -41,6 +44,10 @@ module Notsofast
             end
 
             if @connections[ip_address] > Notsofast::Config.request_limit
+
+              puts "Rate Limiting!!!"
+              Notsofast::Config.notify.call(ip_address, env)
+
               response = Rack::Response.new
               response.write 'Rate Limited'
               response.status = 429
@@ -49,6 +56,7 @@ module Notsofast
           end
         end
       end
+      puts "done"
       [status, headers, response]
     end
   end

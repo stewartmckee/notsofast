@@ -16,47 +16,44 @@ module Notsofast
     end
 
     def call(env)
-      status, headers, response = @app.call(env)
-
-      puts "checking..."
 
       if timestamp - @connections_timestamp > Notsofast::Config.limit_expiry
         @connections_timestamp = timestamp
         @connections = {}
       end
 
-
       ip_address = remote_ip(env)
 
-      unless Notsofast::Config.whitelist.include?(ip_address)
+      puts "Checking #{ip_address} for limit on #{env["REQUEST_PATH"]}"
+
+      if Notsofast::Config.whitelist.select{|ip| ip_address.include?(ip) }.empty?
         if Notsofast::Config.blacklist.include?(ip_address)
           response = Rack::Response.new
           response.write 'Your IP Address has been blacklisted'
           response.status = 403
           response.finish
-          return
+
+          puts " --- Blacklisted ---"
+          return [403, { 'Content-Type' => 'text/html', 'Content-Length' => '0' }, []]
+
         else
-          if (headers["Content-Type"].nil? && Notsofast::Config.response_types.empty?) || (headers["Content-Type"].present? && Notsofast::Config.response_types.present? && Notsofast::Config.response_types.select{|r| headers["Content-Type"].include?(r)}.count > 0)
+
+          #if (headers["Content-Type"].nil? && Notsofast::Config.response_types.empty?) || (headers["Content-Type"].present? && Notsofast::Config.response_types.present? && Notsofast::Config.response_types.select{|r| headers["Content-Type"].include?(r)}.count > 0)
             if @connections[ip_address]
               @connections[ip_address] += 1
             else
               @connections[ip_address] = 1
             end
-
             if @connections[ip_address] > Notsofast::Config.request_limit
 
-              puts "Rate Limiting!!!"
               Notsofast::Config.notify.call(ip_address, env)
-
-              response = Rack::Response.new
-              response.write 'Rate Limited'
-              response.status = 429
-              response.finish
+              puts "--- Rate Limited ---"
+              return [429, { 'Content-Type' => 'text/html', 'Content-Length' => '0' }, []]
             end
-          end
+          #end
         end
       end
-      puts "done"
+      status, headers, response = @app.call(env)
       [status, headers, response]
     end
   end

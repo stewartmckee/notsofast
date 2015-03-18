@@ -24,7 +24,7 @@ module Notsofast
 
       ip_address = remote_ip(env)
 
-      puts "Checking #{ip_address} for limit on #{env["REQUEST_PATH"]}"
+      Rails.logger.info "Checking #{ip_address} for limit on #{env["REQUEST_PATH"]}"
 
       if Notsofast::Config.whitelist.select{|ip| ip_address.include?(ip) }.empty?
         if Notsofast::Config.blacklist.include?(ip_address)
@@ -33,7 +33,7 @@ module Notsofast
           response.status = 403
           response.finish
 
-          puts " --- Blacklisted ---"
+          Rails.logger.info " --- Blacklisted: #{ip_address} ---"
           return [403, { 'Content-Type' => 'text/html', 'Content-Length' => '0' }, []]
 
         else
@@ -47,11 +47,13 @@ module Notsofast
             if @connections[ip_address] > Notsofast::Config.request_limit
 
               Notsofast::Config.notify.call(ip_address, env)
-              puts "--- Rate Limited ---"
+              Rails.logger.info "--- Rate Limited: #{ip_address} ---"
               return [429, { 'Content-Type' => 'text/html', 'Content-Length' => '0' }, []]
             end
           #end
         end
+      else
+        Rails.logger.info "--- Whitelisted: #{ip_address} ---"
       end
       status, headers, response = @app.call(env)
       [status, headers, response]
